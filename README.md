@@ -12,8 +12,8 @@
 
 ## 📂 프로젝트 구조
 - `data_fetcher.py`: 바이낸스 API를 통한 과거 데이터 수집 모듈
-- `analyzer.py`: 수집된 데이터 분석 및 지표 계산 모듈
-- `predictor.py`: 가격 예측 모델링 모듈
+- `analyzer.py`: **(신규)** 수집된 데이터 분석 및 기술적 지표(RSI, MACD, BB 등) 계산 모듈
+- `predictor.py`: 가격 예측 모델링 모듈 (예정)
 - `requirements.txt`: 필요한 라이브러리 목록
 
 ---
