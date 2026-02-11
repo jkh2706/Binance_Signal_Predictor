@@ -50,7 +50,7 @@ def train_prediction_model(symbol='BTCUSDT'):
     print(f"\n--- {symbol} 패턴 학습 시작 ---")
     
     # 1. 데이터 수집 (1년치)
-    data = fetch_historical_data(symbol, interval='1h', years=1)
+    data = fetch_historical_data(symbol, interval='1h', start_str='1 year ago UTC')
     if data.empty:
         print("데이터를 가져오지 못했습니다.")
         return None

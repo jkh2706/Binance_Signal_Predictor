@@ -6,20 +6,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def fetch_historical_data(symbol='BTCUSDT', interval='1h', years=1):
+def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str=None):
     """
-    바이낸스에서 지정된 기간(기본 1년) 동안의 과거 K-라인 데이터를 가져옵니다.
+    바이낸스에서 과거 K-라인 데이터를 가져와 데이터프레임으로 반환합니다.
+    start_str: 예) '1 year ago UTC', '3 days ago UTC'
     """
     api_key = os.getenv('BINANCE_API_KEY')
     api_secret = os.getenv('BINANCE_API_SECRET')
     
     client = Client(api_key, api_secret)
     
-    start_str = f"{years} year ago UTC"
-    print(f"[{datetime.now()}] {symbol} {interval} 데이터 수집 시작 (기간: {years}년)...")
+    if start_str is None:
+        start_str = "1 year ago UTC"
+        
+    print(f"[{datetime.now()}] {symbol} {interval} 데이터 가져오는 중 (시작: {start_str})...")
     
     try:
-        # K-라인 데이터 가져오기 (대량 데이터의 경우 시간이 다소 소요될 수 있음)
+        # K-라인 데이터 가져오기
         klines = client.get_historical_klines(symbol, interval, start_str)
         
         # 데이터프레임 변환
@@ -43,8 +46,8 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', years=1):
         return pd.DataFrame()
 
 if __name__ == "__main__":
-    # 테스트: 사용자로부터 심볼 입력받기 (터미널용)
+    # 테스트 실행
     symbol = input("데이터를 가져올 코인 기호(예: BTCUSDT): ") or 'BTCUSDT'
-    data = fetch_historical_data(symbol, Client.KLINE_INTERVAL_1HOUR, years=1)
+    data = fetch_historical_data(symbol, Client.KLINE_INTERVAL_1HOUR, "1 day ago UTC")
     if not data.empty:
         print(data.head())
