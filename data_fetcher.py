@@ -22,14 +22,14 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str='1 year ago
         if klines_type == HistoricalKlinesType.FUTURES_COIN:
             all_klines = []
             
-            # 상장 초기 타임스탬프 또는 요청한 시간 중 늦은 것 선택
+            # 1. 시작 시간 결정
             earliest_ts = int(client._get_earliest_valid_timestamp(symbol, interval, klines_type=klines_type))
-            
             if start_str == 'all':
                 current_start = earliest_ts
             else:
                 try:
-                    requested_start_ts = int(pd.to_datetime(start_str).timestamp() * 1000)
+                    # '1 year ago UTC' 같은 문자열 처리 (최대한 지원 시도)
+                    requested_start_ts = int((datetime.now() - timedelta(days=365)).timestamp() * 1000)
                     current_start = max(earliest_ts, requested_start_ts)
                 except:
                     current_start = earliest_ts
@@ -37,32 +37,38 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str='1 year ago
             end_ts = int(time.time() * 1000)
             print(f"  > 전체 수집 기간 시작: {pd.to_datetime(current_start, unit='ms')}")
             
-            while current_start < end_ts:
-                # 200일 제한을 피하기 위해 endTime을 반드시 지정하고 그 간격을 좁힘
-                # 1시간봉 500개는 약 20일치
-                current_end = min(current_start + (500 * 3600 * 1000), end_ts)
-                
-                klines = client.futures_coin_klines(
-                    symbol=symbol,
-                    interval=interval,
-                    startTime=current_start,
-                    endTime=current_end,
-                    limit=500
-                )
-                
-                if not klines:
-                    # 데이터가 없으면 조금 뒤로 넘어가서 시도
-                    current_start += (500 * 3600 * 1000)
-                    continue
-                    
-                all_klines.extend(klines)
-                last_ts = klines[-1][0]
-                current_start = last_ts + 1
-                time.sleep(0.05)
-                
-                if len(klines) < 10: # 사실상 끝
-                     break
+            # 2. 200일 제한을 피하기 위한 이중 루프
+            chunk_ms = 190 * 24 * 3600 * 1000 # 190일 (안전하게)
             
+            while current_start < end_ts:
+                # 큰 구간(200일 이내) 설정
+                chunk_end = min(current_start + chunk_ms, end_ts)
+                
+                # 큰 구간 내에서 500개씩 쪼개서 수집
+                temp_start = current_start
+                while temp_start < chunk_end:
+                    klines = client.futures_coin_klines(
+                        symbol=symbol,
+                        interval=interval,
+                        startTime=temp_start,
+                        endTime=chunk_end,
+                        limit=500
+                    )
+                    
+                    if not klines:
+                        break
+                        
+                    all_klines.extend(klines)
+                    last_ts = klines[-1][0]
+                    
+                    if last_ts <= temp_start:
+                        break
+                    temp_start = last_ts + 1
+                    time.sleep(0.05) # API 속도 제한 준수
+                
+                current_start = chunk_end + 1
+                time.sleep(0.1)
+
             klines = all_klines
         else:
             klines = client.get_historical_klines(symbol, interval, start_str, klines_type=klines_type)
@@ -78,6 +84,10 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str='1 year ago
         df['Open time'] = pd.to_datetime(df['Open time'], unit='ms')
         numeric_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric)
+        
+        # 중복 제거 및 정렬
+        df = df.drop_duplicates(subset=['Open time']).sort_values('Open time')
+        
         print(f"✅ 완료: {len(df)}개의 데이터 포인트를 로드했습니다.")
         return df
 
@@ -86,6 +96,8 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str='1 year ago
         return pd.DataFrame()
 
 if __name__ == "__main__":
-    data = fetch_historical_data('XRPUSD_PERP', '1h', '1 year ago UTC')
+    # 테스트: 상장 후 전체 데이터 수집
+    data = fetch_historical_data('XRPUSD_PERP', '1h', 'all')
     if not data.empty:
-        print(data.tail())
+        print(f"최초 데이터 시간: {data['Open time'].iloc[0]}")
+        print(f"최근 데이터 시간: {data['Open time'].iloc[-1]}")
