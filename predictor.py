@@ -5,36 +5,39 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 from analyzer import add_all_indicators
 from data_fetcher import fetch_historical_data
+from macro_fetcher import fetch_macro_data, merge_with_binance_data
 import joblib
 import os
 
 def prepare_training_data(df, horizon=4, threshold=0.01):
     """
-    학습을 위한 타겟(Label) 생성
-    - horizon: 미래 몇 칸을 볼 것인가 (예: 1시간봉 기준 4시간 뒤)
-    - threshold: 몇 % 이상 상승하면 '상승(1)'으로 볼 것인가
+    학습을 위한 타겟(Label) 생성 및 지표 결합
     """
     df = df.copy()
     
-    # 지표 추가
+    # 1. 기술적 지표 추가
     df = add_all_indicators(df)
     
+    # 2. 매크로 데이터 가져오기 및 결합
+    macro_data = fetch_macro_data(years=1.1) # 넉넉하게 가져옴
+    df = merge_with_binance_data(df, macro_data)
+    
     # 미래 가격 변화율 계산 (Label 생성)
-    # 미래의 Close 가격을 가져옴
     df['Future_Close'] = df['Close'].shift(-horizon)
     df['Price_Change'] = (df['Future_Close'] - df['Close']) / df['Close']
     
     # 타겟 생성: threshold 이상 상승하면 1, 아니면 0
     df['Target'] = (df['Price_Change'] >= threshold).astype(int)
     
-    # 학습에 사용할 특성(Features) 선택 (거래량 지표 추가)
+    # 학습에 사용할 특성(Features) 선택 (기술적 지표 + 매크로 지표)
     features = [
         'RSI', 'MACD', 'MACD_Signal', 'MACD_Hist',
         'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower',
-        'OBV', 'Vol_MA_20', 'Vol_Change'
+        'OBV', 'Vol_MA_20', 'Vol_Change',
+        'DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX'
     ]
     
-    # 결측치(지표 계산 초기값 등) 제거
+    # 결측치 제거
     df = df.dropna(subset=features + ['Future_Close'])
     
     return df[features], df['Target']
