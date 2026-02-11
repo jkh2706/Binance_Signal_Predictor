@@ -12,8 +12,8 @@
 
 ## 📂 프로젝트 구조
 - `data_fetcher.py`: 바이낸스 API를 통한 과거 데이터 수집 모듈
-- `analyzer.py`: 수집된 데이터 분석 및 기술적 지표(RSI, MACD, BB 등) 계산 모듈
-- `predictor.py`: **(신규)** 인공지능(Random Forest)을 활용하여 과거 1년치 패턴을 학습하고 미래 가격을 예측하는 모듈
+- `analyzer.py`: 수집된 데이터 분석 및 기술적 지표(RSI, MACD, BB, **OBV 등 거래량 지표** 포함) 계산 모듈
+- `predictor.py`: 인공지능(Random Forest)을 활용하여 과거 1년치 패턴을 학습하고 미래 가격을 예측하는 모듈 (거래량 지표 반영)
 - `requirements.txt`: 필요한 라이브러리 목록
 
 ---

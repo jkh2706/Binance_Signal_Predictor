@@ -27,10 +27,11 @@ def prepare_training_data(df, horizon=4, threshold=0.01):
     # 타겟 생성: threshold 이상 상승하면 1, 아니면 0
     df['Target'] = (df['Price_Change'] >= threshold).astype(int)
     
-    # 학습에 사용할 특성(Features) 선택
+    # 학습에 사용할 특성(Features) 선택 (거래량 지표 추가)
     features = [
         'RSI', 'MACD', 'MACD_Signal', 'MACD_Hist',
-        'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower'
+        'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower',
+        'OBV', 'Vol_MA_20', 'Vol_Change'
     ]
     
     # 결측치(지표 계산 초기값 등) 제거

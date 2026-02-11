@@ -35,6 +35,15 @@ def calculate_bollinger_bands(df, period=20, std_dev=2):
     lower_band = sma - (std * std_dev)
     return upper_band, sma, lower_band
 
+def calculate_obv(df):
+    """OBV(On-Balance Volume) 계산"""
+    obv = (np.sign(df['Close'].diff()) * df['Volume']).fillna(0).cumsum()
+    return obv
+
+def calculate_volume_ma(df, period=20):
+    """거래량 이동평균 계산"""
+    return df['Volume'].rolling(window=period).mean()
+
 def add_all_indicators(df):
     """모든 주요 지표를 데이터프레임에 추가"""
     df = df.copy()
@@ -57,6 +66,11 @@ def add_all_indicators(df):
     df['BB_Upper'] = upper
     df['BB_Middle'] = mid
     df['BB_Lower'] = lower
+    
+    # 5. 거래량 관련 지표 (신규 추가)
+    df['OBV'] = calculate_obv(df)
+    df['Vol_MA_20'] = calculate_volume_ma(df, 20)
+    df['Vol_Change'] = df['Volume'].pct_change().fillna(0)
     
     return df
 
