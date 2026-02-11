@@ -72,6 +72,16 @@ def add_all_indicators(df):
     df['Vol_MA_20'] = calculate_volume_ma(df, 20)
     df['Vol_Change'] = df['Volume'].pct_change().fillna(0)
     
+    # 6. 과거 데이터 패턴 (Lagged Features) 추가 (신규 추가)
+    # 1시간, 4시간, 12시간 전과의 가격 차이 (%)
+    df['Price_Change_1h'] = df['Close'].pct_change(1)
+    df['Price_Change_4h'] = df['Close'].pct_change(4)
+    df['Price_Change_12h'] = df['Close'].pct_change(12)
+    
+    # 12시간 전의 주요 지표 상태
+    df['RSI_Lag_12'] = df['RSI'].shift(12)
+    df['Vol_MA_Lag_12'] = df['Vol_MA_20'].shift(12)
+    
     return df
 
 if __name__ == "__main__":

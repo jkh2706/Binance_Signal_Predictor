@@ -28,7 +28,9 @@ def prepare_training_data_multi(df, horizon=4, threshold=0.015):
         'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower',
         'OBV', 'Vol_MA_20', 'Vol_Change',
         'DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX',
-        'Oil', 'Semiconductor', 'ETH_BTC'
+        'Oil', 'Semiconductor', 'ETH_BTC',
+        'Price_Change_1h', 'Price_Change_4h', 'Price_Change_12h',
+        'RSI_Lag_12', 'Vol_MA_Lag_12'
     ]
     
     df = df.dropna(subset=features + ['Future_Close'])
