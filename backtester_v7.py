@@ -122,7 +122,7 @@ def run_trailing_stop_backtest(symbol='XRPUSD_PERP', initial_xrp=1000, leverage=
     
     print("\n" + "="*45)
     print(f"📊 {symbol} 트레이링 스탑 테스트 결과")
-    print(f"💰 최종 자산: {final_balance:,.2f} XRP ({total_return:+.2%})")
+    print(f"💰 최종 자산: {final_balance:,.2f} XRP ({total_return:+.2f}%)")
     print(f"🔄 거래: {trades_count}회 | 익절(TS): {tp_count}회 | 손절: {sl_count}회")
     print("="*45)
     
