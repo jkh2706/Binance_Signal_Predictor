@@ -9,12 +9,16 @@ def fetch_macro_data(years=1):
     end_date = datetime.now()
     start_date = end_date - timedelta(days=years * 365 + 10)
     
+    # 1. 대상 지표 설정 (보강됨)
     tickers = {
-        'DX-Y.NYB': 'DXY',
-        '^TNX': 'US10Y',
-        '^NDX': 'Nasdaq100',
-        'GC=F': 'Gold',
-        '^VIX': 'VIX'
+        'DX-Y.NYB': 'DXY',      # 달러 인덱스
+        '^TNX': 'US10Y',        # 미국채 10년물 금리
+        '^NDX': 'Nasdaq100',    # 나스닥 100
+        'GC=F': 'Gold',         # 금 선물
+        '^VIX': 'VIX',          # 변동성 지수
+        'CL=F': 'Oil',          # 국제 유가 (WTI)
+        'SMH': 'Semiconductor', # 반도체 지수 (ETF)
+        'ETH-BTC': 'ETH_BTC'    # 이더리움/비트코인 비율
     }
     
     print(f"[{datetime.now()}] 매크로 지표 데이터 수집 중 (기간: {years}년)...")
@@ -69,7 +73,7 @@ def merge_with_binance_data(binance_df, macro_df):
     merged_df = pd.merge(binance_df, macro_df, on='Date_Join', how='left')
     
     # 3. 빈칸 채우기
-    macro_cols = ['DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX']
+    macro_cols = ['DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX', 'Oil', 'Semiconductor', 'ETH_BTC']
     for col in macro_cols:
         if col in merged_df.columns:
             merged_df[col] = merged_df[col].ffill().bfill()

@@ -29,12 +29,13 @@ def prepare_training_data(df, horizon=4, threshold=0.01):
     # 타겟 생성: threshold 이상 상승하면 1, 아니면 0
     df['Target'] = (df['Price_Change'] >= threshold).astype(int)
     
-    # 학습에 사용할 특성(Features) 선택 (기술적 지표 + 매크로 지표)
+    # 학습에 사용할 특성(Features) 선택 (기술적 지표 + 매크로 지표 보강)
     features = [
         'RSI', 'MACD', 'MACD_Signal', 'MACD_Hist',
         'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower',
         'OBV', 'Vol_MA_20', 'Vol_Change',
-        'DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX'
+        'DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX',
+        'Oil', 'Semiconductor', 'ETH_BTC'
     ]
     
     # 결측치 제거
