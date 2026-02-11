@@ -13,7 +13,8 @@ def prepare_training_data_multi(df, horizon=4, threshold=0.015):
     df = df.copy()
     df = add_all_indicators(df)
     
-    macro_data = fetch_macro_data(years=1.1)
+    # 상장 초기부터 학습하기 위해 매크로 데이터 기간을 6년으로 확대
+    macro_data = fetch_macro_data(years=6)
     df = merge_with_binance_data(df, macro_data)
     
     df['Future_Close'] = df['Close'].shift(-horizon)
@@ -37,10 +38,10 @@ def prepare_training_data_multi(df, horizon=4, threshold=0.015):
     return df[features], df['Target'], df['Open time']
 
 def train_xrp_xgboost_model(symbol='XRPUSD_PERP'):
-    print(f"\n--- {symbol} XGBoost 알고리즘 업그레이드 및 학습 시작 ---")
+    print(f"\n--- {symbol} 전생(상장 후 전체) 학습 및 알고리즘 업그레이드 시작 ---")
     
-    # 1. 데이터 수집
-    data = fetch_historical_data(symbol, interval='1h', start_str='1 year ago UTC')
+    # 1. 데이터 수집 (상장 후 전체)
+    data = fetch_historical_data(symbol, interval='1h', start_str='all')
     if data.empty:
         return None
     

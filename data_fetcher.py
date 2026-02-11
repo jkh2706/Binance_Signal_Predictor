@@ -22,9 +22,20 @@ def fetch_historical_data(symbol='BTCUSDT', interval='1h', start_str='1 year ago
         if klines_type == HistoricalKlinesType.FUTURES_COIN:
             all_klines = []
             
-            # 1년 전 타임스탬프 계산 (수동)
-            current_start = int((datetime.now() - timedelta(days=365)).timestamp() * 1000)
+            # 상장 초기 타임스탬프 또는 요청한 시간 중 늦은 것 선택
+            earliest_ts = int(client._get_earliest_valid_timestamp(symbol, interval, klines_type=klines_type))
+            
+            if start_str == 'all':
+                current_start = earliest_ts
+            else:
+                try:
+                    requested_start_ts = int(pd.to_datetime(start_str).timestamp() * 1000)
+                    current_start = max(earliest_ts, requested_start_ts)
+                except:
+                    current_start = earliest_ts
+            
             end_ts = int(time.time() * 1000)
+            print(f"  > 전체 수집 기간 시작: {pd.to_datetime(current_start, unit='ms')}")
             
             while current_start < end_ts:
                 # 200일 제한을 피하기 위해 endTime을 반드시 지정하고 그 간격을 좁힘
