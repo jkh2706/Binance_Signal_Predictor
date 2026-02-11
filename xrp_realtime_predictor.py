@@ -18,7 +18,7 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
     """
     print(f"\n--- {symbol} COIN-M 스위칭 AI 분석 시작 ---")
     
-    model_path = f"model_{symbol}_switching.pkl"
+    model_path = f"model_{symbol}_xgboost.pkl"
     if not os.path.exists(model_path):
         print(f"❌ 모델 파일({model_path})이 없습니다.")
         return None
