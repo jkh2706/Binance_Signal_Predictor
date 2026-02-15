@@ -26,29 +26,36 @@ def load_data():
         if df.empty:
             return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
         
-        # 유니버설 12컬럼 포맷 강제 적용
-        # 0:Type, 1:Time, 2:Sym, 3:Act, 4:Side, 5:Price, 6:Qty, 7:PnL, 8:Fee, 9:Bal, 10:Ex1, 11:Ex2
+        # 유니버설 12컬럼 포맷 강제 적용 (A~L열)
         cols = ["Type", "Time", "Symbol", "Action", "Side", "Price", "Qty", "PnL", "Fee", "Balance", "Extra1", "Extra2"]
-        if len(df.columns) >= 12:
-            df = df.iloc[:, :12]
-            df.columns = cols
-        else:
-            # 컬럼수가 부족하면 유효한 데이터가 아님 (초기화 필요)
-            return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        
+        # 실제 데이터의 컬럼 수가 부족할 경우를 대비해 보정
+        while len(df.columns) < 12:
+            df[f"NewCol_{len(df.columns)}"] = "-"
+        
+        df = df.iloc[:, :12]
+        df.columns = cols
 
         # 데이터 타입 정리
         df['Time'] = pd.to_datetime(df['Time'], errors='coerce') + timedelta(hours=9)
         df = df.dropna(subset=['Time'])
         
-        # 숫자 변환
+        # 숫자 변환 및 전처리
         for col in ['Price', 'Qty', 'PnL', 'Fee', 'Balance']:
-            if col == 'PnL': # ROE% 처리
-                df[col] = df[col].astype(str).str.replace('%', '').str.replace('+', '')
+            df[col] = df[col].astype(str).str.replace('%', '').str.replace('+', '').str.replace(',', '').replace('-', '0')
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+        # AI 판단 근거(Extra1)와 확률(Extra2)이 비어있을 경우 기본값 채우기
+        df['Extra1'] = df['Extra1'].fillna("-")
+        df['Extra2'] = df['Extra2'].fillna("-")
 
         df_real = df[df['Type'] == "REAL"].copy()
         df_virt = df[df['Type'] == "VIRT"].copy()
         df_ai = df[df['Type'] == "AI"].copy()
+        
+        # AI 데이터 컬럼명 한글화 (KeyError 방지용 내부 매핑)
+        if not df_ai.empty:
+            df_ai['AI_판단'] = df_ai['Side'] # Side 컬럼을 판단 결과로 사용
         
         return df_real, df_virt, df_ai
     except Exception as e:
