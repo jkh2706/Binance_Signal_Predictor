@@ -61,14 +61,17 @@ def log_virtual_trade(action, symbol, side, price, pnl, balance):
     header = not os.path.exists(LOG_FILE)
     df.to_csv(LOG_FILE, mode='a', index=False, header=header, encoding='utf-8-sig')
 
-    # 구글 스프레드시트 업데이트
+    # 구글 스프레드시트 업데이트 (Universal 12-column format)
+    # [Type, Time, Sym, Act, Side, Price, Qty, PnL, Fee, Bal, Ex1, Ex2]
     try:
         SHEET_ID = "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk"
-        # Format: [Category, Time, Symbol, Action, Side, Price, PnL, Balance]
-        values = [["VIRT", now_str, symbol, action, side, str(price), f"{pnl:.2%}", f"{balance:.2f}"]]
+        values = [[
+            "VIRT", now_str, symbol, action, side, str(price), "-", 
+            f"{pnl:.2%}", "-", f"{balance:.2f}", "-", "-"
+        ]]
         import json
         val_json = json.dumps(values)
-        os.system(f"export GOG_KEYRING_PASSWORD=chloe && gog sheets append {SHEET_ID} '시트1!A:H' --values-json '{val_json}' --insert INSERT_ROWS")
+        os.system(f"export GOG_KEYRING_PASSWORD=chloe && gog sheets append {SHEET_ID} '시트1!A:L' --values-json '{val_json}' --insert INSERT_ROWS")
     except:
         pass
 
@@ -96,14 +99,17 @@ def log_decision_for_learning(symbol, price, prediction, probs):
     header = not os.path.exists(LEARNING_LOG)
     df.to_csv(LEARNING_LOG, mode='a', index=False, header=header, encoding='utf-8-sig')
 
-    # 구글 스프레드시트 업데이트
+    # 구글 스프레드시트 업데이트 (Universal 12-column format)
     try:
         SHEET_ID = "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk"
-        # Format: [Category, Time, Symbol, Price, Decision, Prob_L, Prob_S, Prob_N]
-        values = [["AI", now_str, symbol, str(price), decision, f"{probs[1]:.4f}", f"{probs[2]:.4f}", f"{probs[0]:.4f}"]]
+        prob_str = f"L:{probs[1]:.2f}/S:{probs[2]:.2f}/N:{probs[0]:.2f}"
+        values = [[
+            "AI", now_str, symbol, "JUDGE", decision, str(price), "-", 
+            "-", "-", "-", decision, prob_str
+        ]]
         import json
         val_json = json.dumps(values)
-        os.system(f"export GOG_KEYRING_PASSWORD=chloe && gog sheets append {SHEET_ID} '시트1!A:H' --values-json '{val_json}' --insert INSERT_ROWS")
+        os.system(f"export GOG_KEYRING_PASSWORD=chloe && gog sheets append {SHEET_ID} '시트1!A:L' --values-json '{val_json}' --insert INSERT_ROWS")
     except:
         pass
 
