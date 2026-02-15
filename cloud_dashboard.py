@@ -128,10 +128,24 @@ else:
                                    template="plotly_dark"), use_container_width=True)
             
             st.subheader("🔍 포지션 판단 근거 (최신 10건)")
-            # 판단 근거를 보여주기 위해 정렬 및 컬럼 선택
-            reasoning_df = df_ai.sort_values('Time', ascending=False).head(10)[['Time', 'AI_판단', 'Extra1', 'Extra2']]
-            reasoning_df.columns = ['시간', '판단', '핵심 지표(RSI/Price/VIX)', '확률 분포']
-            st.table(reasoning_df)
+            try:
+                # 필요한 컬럼이 있는지 한 번 더 확인
+                target_cols = ['Time', 'AI_판단', 'Extra1', 'Extra2']
+                existing_cols = [c for c in target_cols if c in df_ai.columns]
+                
+                reasoning_df = df_ai.sort_values('Time', ascending=False).head(10)[existing_cols]
+                
+                # 컬럼 이름 예쁘게 변경
+                name_map = {
+                    'Time': '시간', 
+                    'AI_판단': '판단', 
+                    'Extra1': '핵심 지표(RSI/Price/VIX)', 
+                    'Extra2': '확률 분포'
+                }
+                reasoning_df = reasoning_df.rename(columns=name_map)
+                st.table(reasoning_df)
+            except Exception as e:
+                st.warning(f"판단 근거 테이블을 표시할 수 없습니다: {e}")
             
             st.subheader("📝 전체 판단 로그")
             st.dataframe(df_ai.sort_values('Time', ascending=False), use_container_width=True)
