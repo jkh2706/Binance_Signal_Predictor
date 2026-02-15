@@ -100,7 +100,8 @@ else:
     with tab3:
         if not df_ai.empty:
             st.subheader("📡 AI 실시간 판단 및 확률 분석")
-            # Extra2에서 확률 파싱 (L:0.50/S:0.10/N:0.40)
+            
+            # 확률 그래프 준비
             def parse_probs(row):
                 try:
                     parts = row['Extra2'].split('/')
@@ -119,7 +120,13 @@ else:
                                    color_discrete_map={'LONG':'#00CC96', 'SHORT':'#EF553B', 'NEUTRAL':'#636EFA'},
                                    template="plotly_dark"), use_container_width=True)
             
-            st.subheader("📝 판단 로그")
+            st.subheader("🔍 포지션 판단 근거 (최신 10건)")
+            # 판단 근거를 보여주기 위해 정렬 및 컬럼 선택
+            reasoning_df = df_ai.sort_values('Time', ascending=False).head(10)[['Time', 'AI_판단', 'Extra1', 'Extra2']]
+            reasoning_df.columns = ['시간', '판단', '핵심 지표(RSI/Price/VIX)', '확률 분포']
+            st.table(reasoning_df)
+            
+            st.subheader("📝 전체 판단 로그")
             st.dataframe(df_ai.sort_values('Time', ascending=False), use_container_width=True)
 
 st.sidebar.title("⚙️ System Control")

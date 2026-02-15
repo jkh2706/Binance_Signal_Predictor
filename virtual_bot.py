@@ -75,37 +75,48 @@ def log_virtual_trade(action, symbol, side, price, pnl, balance):
     except:
         pass
 
-def log_decision_for_learning(symbol, price, prediction, probs):
+def log_decision_for_learning(symbol, price, prediction, probs, df_final):
     """
-    AI의 매시간 판단을 학습용 데이터로 기록합니다. (UTC 기준으로 저장)
+    AI의 매시간 판단을 학습용 데이터로 기록하고 구글 시트에 근거를 남깁니다.
     """
     now_utc = datetime.utcnow()
     now_str = now_utc.strftime('%Y-%m-%d %H:%M:%S')
     
-    # 예측값 해석 (0: Neutral, 1: Long, 2: Short)
+    # 예측값 해석
     pred_map = {0: "NEUTRAL", 1: "LONG", 2: "SHORT"}
     decision = pred_map.get(prediction, "UNKNOWN")
     
-    df = pd.DataFrame([{
+    # 판단 근거 추출 (최근 지표 값들)
+    last_row = df_final.iloc[-1]
+    reasoning = (
+        f"RSI:{last_row['RSI']:.1f} / "
+        f"Price1h:{last_row['Price_Change_1h']:.2%} / "
+        f"MACD:{last_row['MACD_Hist']:.4f} / "
+        f"VIX:{last_row['VIX']:.1f}"
+    )
+    
+    # CSV 저장
+    df_csv = pd.DataFrame([{
         "시간(KST)": now_str,
         "심볼": symbol,
         "현재가": price,
         "AI_판단": decision,
         "NEUTRAL_확률": f"{probs[0]:.4f}",
         "LONG_확률": f"{probs[1]:.4f}",
-        "SHORT_확률": f"{probs[2]:.4f}"
+        "SHORT_확률": f"{probs[2]:.4f}",
+        "판단근거": reasoning
     }])
-    
     header = not os.path.exists(LEARNING_LOG)
-    df.to_csv(LEARNING_LOG, mode='a', index=False, header=header, encoding='utf-8-sig')
+    df_csv.to_csv(LEARNING_LOG, mode='a', index=False, header=header, encoding='utf-8-sig')
 
     # 구글 스프레드시트 업데이트 (Universal 12-column format)
+    # Ex1: 판단결과 + 주요지표, Ex2: 확률분포
     try:
         SHEET_ID = "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk"
         prob_str = f"L:{probs[1]:.2f}/S:{probs[2]:.2f}/N:{probs[0]:.2f}"
         values = [[
             "AI", now_str, symbol, "JUDGE", decision, str(price), "-", 
-            "-", "-", "-", decision, prob_str
+            "-", "-", "-", reasoning, prob_str
         ]]
         import json
         val_json = json.dumps(values)
@@ -149,8 +160,8 @@ def run_virtual_bot_cycle():
         probabilities = model.predict_proba(current_features)[0]
         current_price = binance_data['Close'].iloc[-1]
         
-        # 매시간의 모든 판단을 학습 데이터로 기록 (기훈님 요청 사항)
-        log_decision_for_learning(symbol, current_price, prediction, probabilities)
+        # 매시간의 모든 판단을 학습 데이터로 기록
+        log_decision_for_learning(symbol, current_price, prediction, probabilities, df_final)
         print(f"📊 매시간 AI 판단 기록 완료: {pred_map.get(prediction, 'NEUTRAL')}")
         
     except Exception as e:
