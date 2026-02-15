@@ -5,7 +5,7 @@ python-dotenv
 matplotlib
 scikit-learn
 xgboost
-streamlit
+streamlit>=1.35.0
 plotly
 openpyxl
-altair
+altair>=5.0.0
