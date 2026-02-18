@@ -26,7 +26,7 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
     model = joblib.load(model_path)
     
     # 1. 데이터 수집
-    binance_data = fetch_historical_data(symbol, interval='1h', start_str='100 days ago UTC')
+    binance_data = fetch_historical_data(symbol, interval='1h', start_str='7 days ago UTC')
     macro_data = fetch_macro_data(years=0.1)
     
     # 2. 지표 결합

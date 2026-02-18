@@ -47,7 +47,7 @@ def load_data():
         df.columns = cols
 
         # 시간 보정 (KST)
-        df['Time'] = pd.to_datetime(df['Time'].astype(str).str.replace("'", ""), errors='coerce')
+        df['Time'] = pd.to_datetime(df['Time'].astype(str).str.replace("'", ""), errors='coerce') + timedelta(hours=9)
         df = df.dropna(subset=['Time'])
         
         # 숫자 전처리
