@@ -38,11 +38,7 @@ def load_data():
         df.columns = cols
 
         # 시간 보정 (KST)
-        df['Time'] = pd.to_datetime(df['Time'], errors='coerce')
-        # 이미 KST 문자열인 경우 +9를 하면 안 됨. 
-        # 원본 데이터가 UTC인 경우에만 더해줌 (현재 로거는 KST 문자열로 기록 중)
-        # 하지만 클라우드 서버는 UTC 기준이므로 확인 필요.
-        # 일단 안전하게 NaT 제거
+        df['Time'] = pd.to_datetime(df['Time'].astype(str).str.replace("'", ""), errors='coerce')
         df = df.dropna(subset=['Time'])
         
         # 숫자 전처리
