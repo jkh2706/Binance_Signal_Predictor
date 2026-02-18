@@ -26,7 +26,7 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
     model = joblib.load(model_path)
     
     # 1. 데이터 수집
-    binance_data = fetch_historical_data(symbol, interval='1h', start_str='3 days ago UTC')
+    binance_data = fetch_historical_data(symbol, interval='1h', start_str='100 days ago UTC')
     macro_data = fetch_macro_data(years=0.1)
     
     # 2. 지표 결합
@@ -38,7 +38,9 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
         'SMA_20', 'EMA_20', 'BB_Upper', 'BB_Middle', 'BB_Lower',
         'OBV', 'Vol_MA_20', 'Vol_Change',
         'DXY', 'US10Y', 'Nasdaq100', 'Gold', 'VIX',
-        'Oil', 'Semiconductor', 'ETH_BTC'
+        'Oil', 'Semiconductor', 'ETH_BTC',
+        'Price_Change_1h', 'Price_Change_4h', 'Price_Change_12h',
+        'RSI_Lag_12', 'Vol_MA_Lag_12'
     ]
     
     current_data = df[features].tail(1)

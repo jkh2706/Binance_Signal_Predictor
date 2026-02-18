@@ -10,10 +10,10 @@ def calculate_ema(df, period=20):
     return df['Close'].ewm(span=period, adjust=False).mean()
 
 def calculate_rsi(df, period=14):
-    """RSI(상대강도지수) 계산"""
+    """RSI(상대강도지수) 계산 (Wilder's Smoothing EMA 방식)"""
     delta = df['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    gain = delta.where(delta > 0, 0).ewm(alpha=1/period, adjust=False).mean()
+    loss = (-delta.where(delta < 0, 0)).ewm(alpha=1/period, adjust=False).mean()
     
     rs = gain / loss
     return 100 - (100 / (1 + rs))

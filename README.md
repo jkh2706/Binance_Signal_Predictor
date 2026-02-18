@@ -15,8 +15,16 @@
 - `analyzer.py`: 수집된 데이터 분석 및 기술적 지표(RSI, MACD, BB, OBV 등) 계산 모듈
 - `macro_fetcher.py`: Yahoo Finance API를 통해 달러 인덱스(DXY), 미국채 금리, 나스닥 등 거시 경제 지표를 수집하고 결합하는 모듈
 - `predictor.py`: 인공지능(Random Forest)을 활용하여 기술적 지표와 매크로 지표를 통합 학습하고 모델을 저장하는 모듈
-- `realtime_predictor.py`: **(신규)** 현재 시장 데이터를 가져와 저장된 모델로 4시간 뒤 상승 확률을 실시간 예측하는 실전 모듈
+- `realtime_predictor.py`: 현재 시장 데이터를 가져와 저장된 모델로 4시간 뒤 상승 확률을 실시간 예측하는 실전 모듈
+- `backtester.py`: **(신규)** 수정된 ROE 공식과 수수료 로직이 반영된 최종 백테스팅 모듈
 - `requirements.txt`: 필요한 라이브러리 목록
+
+## ⚙️ 설치 및 실행 방법
+1. `.env.example` 파일을 복사하여 `.env` 파일을 생성하고 본인의 API 키와 시트 ID를 입력하세요.
+2. 필요한 라이브러리 설치: `pip install -r requirements.txt`
+3. 모델 학습: `python3 train_xrp_v3.py`
+4. 백테스터 실행: `python3 backtester.py`
+5. 실시간 예측 실행: `python3 xrp_realtime_predictor.py`
 
 ---
 *본 프로젝트는 기훈님과 AI 비서 클로이가 함께 만들어가는 프로젝트입니다.* ✨

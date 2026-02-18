@@ -3,8 +3,19 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 
+import os
+from dotenv import load_dotenv
+
 # 페이지 설정
 st.set_page_config(page_title="CHLOE | Trading Dashboard V2.8", layout="wide", page_icon="🎯")
+
+# 환경 변수 로드
+load_dotenv()
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
+
+if not SHEET_ID:
+    st.error("❌ .env 파일에 GOOGLE_SHEET_ID가 설정되지 않았습니다.")
+    st.stop()
 
 # 스타일 설정
 st.markdown("""
@@ -15,8 +26,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 구글 시트 정보
-SHEET_ID = "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk"
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv"
 
 @st.cache_data(ttl=15)

@@ -75,7 +75,15 @@ def run_virtual_bot_cycle():
         return f"⚠️ **[AI 분석 오류]**\n- 에러 발생: {e}"
 
     # 현재가 확인
-    data = fetch_historical_data(symbol, interval='1m', start_str='5 minutes ago UTC')
+    try:
+        from binance.enums import HistoricalKlinesType
+        # COIN-M의 경우 klines_type을 명시하지 않으면 fetch_historical_data 내부에서 
+        # symbol에 'USD_'가 있으면 FUTURES_COIN으로 설정됨.
+        # 1m 데이터 에러 우회를 위해 SPOT으로 가격을 가져옴
+        data = fetch_historical_data('XRPUSDT', interval='1m', start_str='10 minutes ago UTC', klines_type=HistoricalKlinesType.SPOT)
+    except Exception as e:
+        print(f"SPOT 현재가 수집 실패: {e}")
+        return "⚠️ **[데이터 오류]**\n- 최신 가격 정보를 가져올 수 없습니다."
     if data.empty: return "⚠️ **[데이터 오류]**\n- 최신 가격 정보를 가져올 수 없습니다."
     current_price = data['Close'].iloc[-1]
     

@@ -48,8 +48,8 @@ def train_xrp_switching_model(symbol='XRPUSD_PERP'):
     """
     print(f"\n--- {symbol} COIN-M 스위칭 모델 학습 시작 ---")
     
-    # 1. 데이터 수집 (COIN-M API 제한에 따라 50일치 수집 테스트)
-    data = fetch_historical_data(symbol, interval='1h', start_str='50 days ago UTC')
+    # [수정 5] 데이터 수집 기간을 50일에서 2년으로 확장
+    data = fetch_historical_data(symbol, interval='1h', start_str='2 years ago UTC')
     if data.empty:
         print("데이터 수집 실패")
         return None
@@ -60,8 +60,8 @@ def train_xrp_switching_model(symbol='XRPUSD_PERP'):
     # 3. 분리
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
     
-    # 4. 모델 학습 (RandomForest - 클래스 가중치 밸런스 조정)
-    print(f"모델 학습 중... (데이터: {len(X_train)}건)")
+    # 4. 모델 학습 (데이터 크기 출력 추가)
+    print(f"모델 학습 중... (훈련 데이터: {len(X_train)}건 | 전체 데이터: {len(X)}건)")
     model = RandomForestClassifier(n_estimators=200, class_weight='balanced', random_state=42)
     model.fit(X_train, y_train)
     
