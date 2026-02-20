@@ -6,12 +6,12 @@ import os
 from dotenv import load_dotenv
 
 # 페이지 설정
-st.set_page_config(page_title="CHLOE | Trading Dashboard V3.2", layout="wide", page_icon="🎯")
+st.set_page_config(page_title="CHLOE | Trading Dashboard V3.3", layout="wide", page_icon="🎯")
 
 load_dotenv()
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk")
 
-# 구글 시트 CSV URL (gid=0)
+# 구글 시트 CSV URL
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
 
 @st.cache_data(ttl=5)
@@ -54,7 +54,7 @@ def load_data():
         st.error(f"Sync Error: {e}")
         return None, None, None
 
-st.title("🎯 트레이딩 마스터 대시보드 V3.2")
+st.title("🎯 트레이딩 마스터 대시보드 V3.3")
 st.caption(f"Last Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (KST)")
 
 df_r, df_v, df_s = load_data()
@@ -65,13 +65,35 @@ if st.sidebar.button("♻️ Force Sync"):
 
 t1, t2, t3 = st.tabs(["💰 실전 매매", "🧪 가상 매매", "📡 AI 시그널"])
 
+with t1:
+    if df_r is not None and not df_r.empty:
+        # 상단 핵심 지표 복구
+        m1, m2, m3 = st.columns(3)
+        m1.metric("누적 실현 손익", f"{df_r['PnL'].sum():,.4f} XRP")
+        m2.metric("최근 체결가", f"${df_r['Price'].iloc[-1]:,.4f}")
+        m3.metric("현재 포지션 수량", f"{df_r['Balance'].iloc[-1]:,.2f} XRP")
+        
+        st.subheader("📈 실전 누적 수익 곡선")
+        st.plotly_chart(px.line(df_r, x='Time', y=df_r['PnL'].cumsum(), template="plotly_dark"), use_container_width=True)
+        
+        st.subheader("📝 최근 실전 매매 기록")
+        st.dataframe(df_r.sort_values('Time', ascending=False), use_container_width=True)
+    else:
+        st.info("실전 거래 내역이 없습니다.")
+
+with t2:
+    if df_v is not None and not df_v.empty:
+        st.subheader("🧪 가상 매매 잔고 변화")
+        st.metric("현재 가상 잔고", f"{df_v['Balance'].iloc[-1]:,.2f} USD")
+        st.plotly_chart(px.area(df_v, x='Time', y='Balance', template="plotly_dark"), use_container_width=True)
+        st.dataframe(df_v.sort_values('Time', ascending=False), use_container_width=True)
+
 with t3:
     if df_s is not None and not df_s.empty:
-        st.subheader("📈 AI 확신도 실시간 변화 (최근 100건)")
+        st.subheader("📡 AI 확신도 실시간 변화 (최근 100건)")
         
         def parse_ai_probs(row):
             try:
-                # 'L:0.XX/S:0.XX/N:0.XX' 파싱
                 txt = str(row['Extra2'])
                 parts = txt.split('/')
                 res = {'L': None, 'S': None, 'N': None}
@@ -86,10 +108,8 @@ with t3:
             except: return pd.Series([None, None, None])
             
         prob_df = df_s.tail(100).copy()
-        parsed_data = prob_df.apply(parse_ai_probs, axis=1)
-        prob_df[['LONG', 'SHORT', 'NEUTRAL']] = parsed_data
+        prob_df[['LONG', 'SHORT', 'NEUTRAL']] = prob_df.apply(parse_ai_probs, axis=1)
         
-        # 유효한 숫자 데이터만 필터링
         chart_df = prob_df.dropna(subset=['LONG', 'SHORT', 'NEUTRAL'])
         if not chart_df.empty:
             fig = px.line(chart_df, x='Time', y=['LONG', 'SHORT', 'NEUTRAL'],
@@ -97,20 +117,8 @@ with t3:
                          template="plotly_dark")
             fig.update_layout(height=400, margin=dict(l=0, r=0, t=20, b=0))
             st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("유효한 확률 데이터가 없습니다. 시트를 확인해 주세요.")
         
         st.subheader("📝 판단 근거 로그")
         st.dataframe(df_s.sort_values('Time', ascending=False).head(50)[['Time', 'Side', 'Extra1', 'Extra2']], use_container_width=True)
     else:
         st.info("AI 데이터를 불러오는 중...")
-
-with t1:
-    if df_r is not None and not df_r.empty:
-        st.plotly_chart(px.line(df_r, x='Time', y=df_r['PnL'].cumsum(), title="Cumulative Profit (XRP)", template="plotly_dark"), use_container_width=True)
-        st.dataframe(df_r.sort_values('Time', ascending=False), use_container_width=True)
-
-with t2:
-    if df_v is not None and not df_v.empty:
-        st.plotly_chart(px.area(df_v, x='Time', y='Balance', title="Virtual Account Trend (USD)", template="plotly_dark"), use_container_width=True)
-        st.dataframe(df_v.sort_values('Time', ascending=False), use_container_width=True)
