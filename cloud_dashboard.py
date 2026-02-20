@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # 1. 고급스러운 테마 및 페이지 설정
 st.set_page_config(
-    page_title="CHLOE AI | Premium Trading Intelligence",
+    page_title="클로이 AI | 프리미엄 트레이딩 대시보드",
     layout="wide",
     page_icon="💎"
 )
@@ -20,10 +20,10 @@ CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&
 # 2. 커스텀 CSS (다크 모드 최적화 및 시인성 강화)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;700&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', 'Noto Sans KR', sans-serif;
     }
     
     .main {
@@ -47,9 +47,10 @@ st.markdown("""
     
     [data-testid="stMetricLabel"] {
         color: #8b949e !important;
-        font-size: 1rem !important;
+        font-size: 0.9rem !important;
         text-transform: uppercase;
         letter-spacing: 0.1em;
+        font-weight: 600;
     }
 
     /* 탭 스타일 커스텀 */
@@ -73,11 +74,6 @@ st.markdown("""
         border: 1px solid #1f6feb !important;
     }
 
-    /* 사이드바 */
-    .css-1d391kg {
-        background-color: #0d1117;
-    }
-    
     /* 데이터프레임 스타일 */
     .stDataFrame {
         border: 1px solid #30363d;
@@ -88,13 +84,6 @@ st.markdown("""
         color: #f0f6fc !important;
         font-weight: 700 !important;
     }
-    
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -104,90 +93,91 @@ def load_data():
         df = pd.read_csv(CSV_URL, dtype=str).fillna("-")
         if df.empty: return None, None, None
         if df.iloc[0, 0] == "Type": df = df.iloc[1:].reset_index(drop=True)
-        cols = ["Type", "Time", "Symbol", "Action", "Side", "Price", "Qty", "PnL", "Fee", "Balance", "Extra1", "Extra2"]
+        cols = ["종류", "시간", "심볼", "액션", "포지션", "가격", "수량", "수익", "수수료", "잔고", "지표", "확률분포"]
         df = df.iloc[:, :12]
         df.columns = cols
-        df['Time'] = pd.to_datetime(df['Time'].apply(lambda x: str(x).replace("'", "").strip()), errors='coerce')
-        df = df.dropna(subset=['Time']).sort_values('Time')
-        for col in ['Price', 'Qty', 'PnL', 'Fee', 'Balance']:
+        df['시간'] = pd.to_datetime(df['시간'].apply(lambda x: str(x).replace("'", "").strip()), errors='coerce')
+        df = df.dropna(subset=['시간']).sort_values('시간')
+        for col in ['가격', '수량', '수익', '수수료', '잔고']:
             df[col] = pd.to_numeric(df[col].str.replace('[+%,]', '', regex=True), errors='coerce').fillna(0.0)
         
-        reals = df[df['Type'] == "REAL"].drop_duplicates(subset=['Extra2'], keep='last').copy()
-        virts = df[df['Type'] == "VIRT"].copy()
-        signals = df[df['Type'] == "AI"].copy()
+        reals = df[df['종류'] == "REAL"].drop_duplicates(subset=['확률분포'], keep='last').copy()
+        virts = df[df['종류'] == "VIRT"].copy()
+        signals = df[df['종류'] == "AI"].copy()
         return reals, virts, signals
     except Exception as e:
-        st.error(f"Sync Error: {e}")
+        st.error(f"동기화 오류: {e}")
         return None, None, None
 
 # 헤더 섹션
 c1, c2 = st.columns([3, 1])
 with c1:
-    st.title("💎 Premium Trading Intelligence")
-    st.markdown(f"**CHLOE V4.0** | 실시간 데이터 동기화 활성화 중")
+    st.title("💎 프리미엄 트레이딩 대시보드")
+    st.markdown(f"**클로이(CHLOE) AI V4.1** | 실시간 시장 감시 가동 중")
 with c2:
-    st.markdown(f"<div style='text-align: right; color: #8b949e; padding-top: 20px;'>Last Update: {datetime.now().strftime('%H:%M:%S')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: right; color: #8b949e; padding-top: 20px;'>마지막 업데이트: {datetime.now().strftime('%H:%M:%S')}</div>", unsafe_allow_html=True)
 
 df_r, df_v, df_s = load_data()
 
 # 사이드바
 with st.sidebar:
-    st.image("https://raw.githubusercontent.com/openclaw/openclaw/main/assets/logo.png", width=100) # 가상의 로고 주소
-    st.header("Control Panel")
-    if st.button("♻️ Force Sync Now", use_container_width=True):
+    st.header("제어판")
+    if st.button("♻️ 데이터 강제 동기화", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
     st.divider()
-    st.info("시인성 강화를 위해 폰트 및 카드 디자인이 최적화되었습니다.")
+    st.info("시인성 강화를 위해 다크 테마 및 한글 폰트가 최적화되었습니다.")
 
 # 메인 탭
-tab1, tab2, tab3 = st.tabs(["💰 LIVE TRADES", "🧪 VIRTUAL LAB", "📡 AI ANALYTICS"])
+tab1, tab2, tab3 = st.tabs(["💰 실전 매매 현황", "🧪 AI 가상 실험실", "📡 실시간 AI 시그널"])
 
 # 탭 1: 실전 매매
 with tab1:
     if df_r is not None and not df_r.empty:
         col1, col2, col3 = st.columns(3)
-        total_pnl = df_r['PnL'].sum()
-        pnl_color = "normal" if total_pnl >= 0 else "inverse"
-        col1.metric("Cumulative PnL", f"{total_pnl:,.4f} XRP", delta=f"{total_pnl:,.4f}")
-        col2.metric("Market Price", f"${df_r['Price'].iloc[-1]:,.4f}")
-        col3.metric("Current Exposure", f"{df_r['Balance'].iloc[-1]:,.2f} XRP")
+        total_pnl = df_r['수익'].sum()
+        col1.metric("누적 수익", f"{total_pnl:,.4f} XRP", delta=f"{total_pnl:,.4f}")
+        col2.metric("현재 시장가", f"${df_r['가격'].iloc[-1]:,.4f}")
+        col3.metric("현재 포지션 수량", f"{df_r['잔고'].iloc[-1]:,.2f} XRP")
         
         st.markdown("---")
-        # 수익 곡선 (고급형 그라데이션 차트)
-        df_r['CumPnL'] = df_r['PnL'].cumsum()
+        st.subheader("📈 누적 수익 곡선")
+        df_r['누적수익'] = df_r['수익'].cumsum()
         fig_r = go.Figure()
-        fig_r.add_trace(go.Scatter(x=df_r['Time'], y=df_r['CumPnL'], fill='tozeroy', 
+        fig_r.add_trace(go.Scatter(x=df_r['시간'], y=df_r['누적수익'], fill='tozeroy', 
                                   line=dict(color='#58a6ff', width=3),
-                                  fillcolor='rgba(88, 166, 255, 0.1)'))
-        fig_r.update_layout(template="plotly_dark", title="Performance Curve", 
-                           margin=dict(l=0, r=0, t=40, b=0), height=400,
+                                  fillcolor='rgba(88, 166, 255, 0.1)',
+                                  name="수익 곡선"))
+        fig_r.update_layout(template="plotly_dark", 
+                           margin=dict(l=0, r=0, t=20, b=0), height=400,
                            xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='#30363d'))
         st.plotly_chart(fig_r, use_container_width=True)
         
-        st.subheader("Recent Execution Log")
-        st.dataframe(df_r.sort_values('Time', ascending=False), use_container_width=True)
+        st.subheader("📝 최근 실행 로그")
+        st.dataframe(df_r.sort_values('시간', ascending=False), use_container_width=True)
     else:
-        st.warning("No live data found.")
+        st.warning("실전 매매 데이터를 찾을 수 없습니다.")
 
 # 탭 2: 가상 매매
 with tab2:
     if df_v is not None and not df_v.empty:
-        curr_v = df_v['Balance'].iloc[-1]
-        st.metric("Virtual Balance", f"${curr_v:,.2f} USD", delta=f"{curr_v-1000:,.2f}")
+        curr_v = df_v['잔고'].iloc[-1]
+        st.metric("가상 계좌 잔고", f"${curr_v:,.2f} USD", delta=f"{curr_v-1000:,.2f}")
         
-        fig_v = px.area(df_v, x='Time', y='Balance', template="plotly_dark")
+        st.subheader("🧪 가상 자산 변화 추이")
+        fig_v = px.area(df_v, x='시간', y='잔고', template="plotly_dark")
         fig_v.update_traces(line_color='#79c0ff', fillcolor='rgba(121, 192, 255, 0.2)')
-        fig_v.update_layout(margin=dict(l=0, r=0, t=30, b=0), height=400)
+        fig_v.update_layout(margin=dict(l=0, r=0, t=20, b=0), height=400,
+                           xaxis=dict(showgrid=False), yaxis=dict(gridcolor='#30363d'))
         st.plotly_chart(fig_v, use_container_width=True)
-        st.dataframe(df_v.sort_values('Time', ascending=False), use_container_width=True)
+        st.dataframe(df_v.sort_values('시간', ascending=False), use_container_width=True)
 
 # 탭 3: AI 분석
 with tab3:
     if df_s is not None and not df_s.empty:
         def parse_ai_probs(row):
             try:
-                txt = str(row['Extra2'])
+                txt = str(row['확률분포'])
                 parts = txt.split('/')
                 res = {'L': 0.0, 'S': 0.0, 'N': 0.0}
                 for p in parts:
@@ -204,19 +194,19 @@ with tab3:
         prob_df[['LONG', 'SHORT', 'NEUTRAL']] = prob_df.apply(parse_ai_probs, axis=1)
         chart_df = prob_df.dropna(subset=['LONG'])
         
-        st.subheader("Intelligence Confidence Trend")
+        st.subheader("📡 AI 포지션 확신도 실시간 추이")
         if not chart_df.empty:
             fig_s = go.Figure()
             colors = {'LONG': '#3fb950', 'SHORT': '#f85149', 'NEUTRAL': '#58a6ff'}
             for col in ['LONG', 'SHORT', 'NEUTRAL']:
-                fig_s.add_trace(go.Scatter(x=chart_df['Time'], y=chart_df[col], name=col,
+                fig_s.add_trace(go.Scatter(x=chart_df['시간'], y=chart_df[col], name=col,
                                           line=dict(color=colors[col], width=2, dash='solid' if col != 'NEUTRAL' else 'dot')))
-            fig_s.update_layout(template="plotly_dark", margin=dict(l=0, r=0, t=30, b=0), height=450,
+            fig_s.update_layout(template="plotly_dark", margin=dict(l=0, r=0, t=20, b=0), height=450,
                                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                                xaxis=dict(showgrid=False), yaxis=dict(gridcolor='#30363d'))
             st.plotly_chart(fig_s, use_container_width=True)
         
-        st.subheader("Logic Reasoning Archive")
-        st.dataframe(df_s.sort_values('Time', ascending=False).head(50)[['Time', 'Side', 'Extra1', 'Extra2']], use_container_width=True)
+        st.subheader("📝 AI 판단 및 핵심 지표 로그")
+        st.dataframe(df_s.sort_values('시간', ascending=False).head(50)[['시간', '포지션', '지표', '확률분포']], use_container_width=True)
     else:
-        st.info("Awaiting AI analysis data...")
+        st.info("AI 분석 데이터를 수집 중입니다...")
