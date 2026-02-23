@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
 from dotenv import load_dotenv
+from streamlit_autorefresh import st_autorefresh
 
 # 1. 페이지 설정
 st.set_page_config(
@@ -17,6 +18,9 @@ st.set_page_config(
 load_dotenv()
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk")
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
+
+# 5초마다 자동 새로고침 설정 (시인성 및 실시간성 강화)
+st_autorefresh(interval=5000, key="datarefresh")
 
 # 2. 커스텀 CSS (다크 모드 최적화 및 시인성 강화)
 st.markdown("""
@@ -88,7 +92,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=3)
 def load_data():
     try:
         df = pd.read_csv(CSV_URL, dtype=str).fillna("-")
@@ -110,23 +114,34 @@ def load_data():
         st.error(f"동기화 오류: {e}")
         return None, None, None
 
-def get_realtime_price_no_auth(symbol="XRPUSDT"):
-    """API 키 없이 공용 API를 통해 가격 조회 (Streamlit Cloud 환경 최적화)"""
-    try:
-        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
-        response = requests.get(url, timeout=5)
-        data = response.json()
-        return float(data['price'])
-    except:
-        return 0.0
+def get_realtime_price_robust(symbol="XRPUSDT"):
+    """여러 엔드포인트를 시도하여 실시간 가격 조회 (차단 방지)"""
+    endpoints = [
+        f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}",
+        f"https://api1.binance.com/api/v3/ticker/price?symbol={symbol}",
+        f"https://api2.binance.com/api/v3/ticker/price?symbol={symbol}",
+        f"https://api3.binance.com/api/v3/ticker/price?symbol={symbol}"
+    ]
+    for url in endpoints:
+        try:
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                return float(data['price'])
+        except:
+            continue
+    return 0.0
+
+# KST 시간 설정
+now_kst = datetime.utcnow() + timedelta(hours=9)
 
 # 헤더 섹션
 c1, c2 = st.columns([3, 1])
 with c1:
     st.title("💎 프리미엄 트레이딩 대시보드")
-    st.markdown(f"**클로이(CHLOE) AI V4.3** | 시스템 최적화 완료")
+    st.markdown(f"**클로이(CHLOE) AI V4.4** | 실시간 시스템 최적화 완료")
 with c2:
-    st.markdown(f"<div style='text-align: right; color: #8b949e; padding-top: 20px;'>마지막 업데이트: {datetime.now().strftime('%H:%M:%S')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: right; color: #8b949e; padding-top: 20px;'>마지막 업데이트: {now_kst.strftime('%H:%M:%S')} (KST)</div>", unsafe_allow_html=True)
 
 df_r, df_v, df_s = load_data()
 
@@ -137,7 +152,7 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
     st.divider()
-    st.info("클라우드 환경에서 인증 오류가 발생하지 않도록 공용 API 라이브러리로 전환되었습니다.")
+    st.info("실시간 시장가는 5초마다 자동 갱신됩니다.")
 
 # 메인 탭
 tab1, tab2, tab3 = st.tabs(["💰 실전 매매 현황", "🧪 AI 가상 실험실", "📡 실시간 AI 시그널"])
@@ -148,11 +163,11 @@ with tab1:
         col1, col2, col3 = st.columns(3)
         total_pnl = df_r['수익'].sum()
         
-        # 실시간 가격 조회 (인증 없는 방식으로 변경)
-        rt_price = get_realtime_price_no_auth("XRPUSDT")
+        # 실시간 가격 조회 (강력한 버전)
+        rt_price = get_realtime_price_robust("XRPUSDT")
         
         col1.metric("누적 수익", f"{total_pnl:,.4f} XRP", delta=f"{total_pnl:,.4f}")
-        col2.metric("실시간 시장가", f"${rt_price:,.4f}" if rt_price > 0 else "조회 중...", 
+        col2.metric("실시간 시장가", f"${rt_price:,.4f}" if rt_price > 0 else "데이터 수신 중...", 
                    delta=f"{rt_price - df_r['가격'].iloc[-1]:.4f}" if rt_price > 0 else None)
         col3.metric("현재 포지션 수량", f"{df_r['잔고'].iloc[-1]:,.2f} XRP")
         
