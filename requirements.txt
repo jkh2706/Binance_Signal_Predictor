@@ -10,4 +10,3 @@ plotly
 openpyxl
 altair>=5.0.0
 requests
-streamlit-autorefresh
