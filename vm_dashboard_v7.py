@@ -49,7 +49,7 @@ def get_live_price():
     except: return 0.0
 
 # --- 헤더 ---
-st.title("🖥️ VM 로컬 트레이딩 관제 센터 (V7.0)")
+st.title("🖥️ XRP선물 매매 VM 로컬 트레이딩 관제 센터 (V7.0)")
 st.caption(f"구글 시트/스트림릿 클라우드 미사용 | VM 서버 내부 데이터 직접 연동 중")
 
 price = get_live_price()
@@ -60,7 +60,7 @@ df_virt = load_csv(VIRT_CSV, "시간(KST)")
 # 상단 지표
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("실시간 XRP 시세", f"${price:,.1f}" if price > 0 else "연결 확인 중")
+    st.metric("실시간 XRP 시세", f"${price:,.4f}" if price > 0 else "연결 확인 중")
 with col2:
     if not df_real.empty:
         # '실현손익' 컬럼 합계
