@@ -4,10 +4,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import os
+import requests
 from dotenv import load_dotenv
-from binance.client import Client
 
-# 1. 고급스러운 테마 및 페이지 설정
+# 1. 페이지 설정
 st.set_page_config(
     page_title="클로이 AI | 프리미엄 트레이딩 대시보드",
     layout="wide",
@@ -17,11 +17,6 @@ st.set_page_config(
 load_dotenv()
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "1xQuz_k_FjE1Mjo0R21YS49Pr3ZNpG3yPTofzYyNSbuk")
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
-
-# 바이낸스 클라이언트 설정 (실시간 가격 조회용)
-BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
-BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
-client = Client(BINANCE_API_KEY, BINANCE_API_SECRET)
 
 # 2. 커스텀 CSS (다크 모드 최적화 및 시인성 강화)
 st.markdown("""
@@ -115,10 +110,13 @@ def load_data():
         st.error(f"동기화 오류: {e}")
         return None, None, None
 
-def get_realtime_price(symbol="XRPUSDT"):
+def get_realtime_price_no_auth(symbol="XRPUSDT"):
+    """API 키 없이 공용 API를 통해 가격 조회 (Streamlit Cloud 환경 최적화)"""
     try:
-        ticker = client.get_symbol_ticker(symbol=symbol)
-        return float(ticker['price'])
+        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        return float(data['price'])
     except:
         return 0.0
 
@@ -126,7 +124,7 @@ def get_realtime_price(symbol="XRPUSDT"):
 c1, c2 = st.columns([3, 1])
 with c1:
     st.title("💎 프리미엄 트레이딩 대시보드")
-    st.markdown(f"**클로이(CHLOE) AI V4.2** | 실시간 시장 감시 가동 중")
+    st.markdown(f"**클로이(CHLOE) AI V4.3** | 시스템 최적화 완료")
 with c2:
     st.markdown(f"<div style='text-align: right; color: #8b949e; padding-top: 20px;'>마지막 업데이트: {datetime.now().strftime('%H:%M:%S')}</div>", unsafe_allow_html=True)
 
@@ -139,7 +137,7 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
     st.divider()
-    st.info("실시간 시장가는 바이낸스 API를 통해 5초마다 갱신됩니다.")
+    st.info("클라우드 환경에서 인증 오류가 발생하지 않도록 공용 API 라이브러리로 전환되었습니다.")
 
 # 메인 탭
 tab1, tab2, tab3 = st.tabs(["💰 실전 매매 현황", "🧪 AI 가상 실험실", "📡 실시간 AI 시그널"])
@@ -150,8 +148,8 @@ with tab1:
         col1, col2, col3 = st.columns(3)
         total_pnl = df_r['수익'].sum()
         
-        # 실시간 가격 조회
-        rt_price = get_realtime_price("XRPUSDT")
+        # 실시간 가격 조회 (인증 없는 방식으로 변경)
+        rt_price = get_realtime_price_no_auth("XRPUSDT")
         
         col1.metric("누적 수익", f"{total_pnl:,.4f} XRP", delta=f"{total_pnl:,.4f}")
         col2.metric("실시간 시장가", f"${rt_price:,.4f}" if rt_price > 0 else "조회 중...", 
