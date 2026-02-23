@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from dotenv import load_dotenv
 
 # [V7.0] VM 서버 전용 로컬 대시보드 - 클라우드/구글시트 의존성 완전 제거
-st.set_page_config(page_title="클로이 AI 로컬 관제 센터", layout="wide", page_icon="🖥️")
+st.set_page_config(page_title="클로이 XRP AI 로컬 매매 관제 센터", layout="wide", page_icon="🖥️")
 
 # 1. 로컬 데이터 경로 설정
 WORKSPACE_DIR = "/home/jeong-kihun/.openclaw/workspace"
@@ -50,7 +50,7 @@ def get_live_price():
 
 # --- 헤더 ---
 st.title("🖥️ VM 로컬 트레이딩 관제 센터 (V7.0)")
-st.caption(f"구글 시트/스트림릿 클라우드 미사용 | 서버 내부 데이터 직접 연동 중")
+st.caption(f"구글 시트/스트림릿 클라우드 미사용 | VM 서버 내부 데이터 직접 연동 중")
 
 price = get_live_price()
 df_real = load_csv(REAL_CSV, "시간(KST)")
@@ -60,12 +60,12 @@ df_virt = load_csv(VIRT_CSV, "시간(KST)")
 # 상단 지표
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("실시간 XRP 시세", f"${price:,.4f}" if price > 0 else "연결 확인 중")
+    st.metric("실시간 XRP 시세", f"${price:,.1f}" if price > 0 else "연결 확인 중")
 with col2:
     if not df_real.empty:
         # '실현손익' 컬럼 합계
         pnl_sum = pd.to_numeric(df_real['실현손익'].astype(str).str.replace('[+%,]', '', regex=True), errors='coerce').sum()
-        st.metric("실전 누적 수익", f"{pnl_sum:,.2f} XRP")
+        st.metric("실전 누적 수익", f"{pnl_sum:,.1f} XRP")
     else:
         st.metric("실전 누적 수익", "0.00 XRP")
 with col3:
