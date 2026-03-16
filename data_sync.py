@@ -64,6 +64,48 @@ def sync_historical_data(symbol='XRPUSDT', interval='15m', start_str='3 years ag
         print(f"❌ 데이터 수집 중 오류 발생: {e}")
         return existing_df
 
+def sync_funding_rates(symbol='XRPUSDT', start_str='3 years ago UTC'):
+    """
+    바이낸스 선물 펀딩비를 가져와 로컬에 저장하고 업데이트합니다.
+    """
+    api_key = os.getenv('BINANCE_API_KEY')
+    api_secret = os.getenv('BINANCE_API_SECRET')
+    client = Client(api_key, api_secret)
+    
+    file_path = os.path.join(DATA_DIR, f"{symbol}_funding.csv")
+    
+    existing_df = pd.DataFrame()
+    if os.path.exists(file_path):
+        try:
+            existing_df = pd.read_csv(file_path)
+            existing_df['timestamp'] = pd.to_datetime(existing_df['timestamp'])
+        except: pass
+
+    start_ts = int(existing_df['timestamp'].max().timestamp() * 1000) + 1 if not existing_df.empty else start_str
+    
+    try:
+        # get_funding_rate_history는 limit이 1000개이므로 반복 호출 필요할 수 있음
+        # 하지만 get_historical_klines와 달리 자동으로 루프 돌지 않으므로 직접 구현
+        all_funding = []
+        # 간단하게 최근 데이터 위주로 가져오거나 필요한 만큼 루프
+        funding = client.futures_funding_rate(symbol=symbol, startTime=start_ts, limit=1000)
+        all_funding.extend(funding)
+        
+        if not all_funding:
+            return existing_df
+            
+        new_df = pd.DataFrame(all_funding)
+        new_df['timestamp'] = pd.to_datetime(new_df['fundingTime'], unit='ms')
+        new_df['fundingRate'] = new_df['fundingRate'].astype(float)
+        new_df = new_df[['timestamp', 'fundingRate']]
+        
+        final_df = pd.concat([existing_df, new_df]).drop_duplicates(subset=['timestamp']).sort_values('timestamp')
+        final_df.to_csv(file_path, index=False)
+        return final_df
+    except Exception as e:
+        print(f"❌ 펀딩비 수집 오류: {e}")
+        return existing_df
+
 def _format_klines(klines):
     df = pd.DataFrame(klines, columns=[
         'Open time', 'Open', 'High', 'Low', 'Close', 'Volume',

@@ -96,6 +96,14 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     df['volume_ratio'] = df['volume'] / df['volume_sma_20']
 
     # ── 5. 바이낸스 선물 및 수익률 파생 피처 ────────────────
+    # 펀딩비 피처 추가 (data_fetcher에서 로드된 경우)
+    if 'fundingrate' in df.columns:
+        df['funding_rate'] = df['fundingrate']
+    elif 'fundingRate' in df.columns:
+        df['funding_rate'] = df['fundingRate']
+    else:
+        df['funding_rate'] = 0.0
+
     # 수익률 및 변동성 (Rolling Std)
     for w in [1, 3, 7, 14, 21]:
         df[f'return_{w}'] = df['close'].pct_change(w)

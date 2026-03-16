@@ -2,11 +2,13 @@ import os
 import time
 from datetime import datetime, timedelta
 from train_xrp_v4 import train_xrp_xgboost_model_v4
+from model_training import optimize_hyperparams
 
 class WFOPipeline:
-    def __init__(self, cycle_hours=168, threshold_degradation=0.1):
+    def __init__(self, cycle_hours=168, threshold_degradation=0.1, use_optuna=True):
         self.cycle_hours = cycle_hours
         self.threshold_degradation = threshold_degradation
+        self.use_optuna = use_optuna
         self.last_train_time = None
         self.last_accuracy = 0.0
 
@@ -31,7 +33,7 @@ class WFOPipeline:
     def execute(self):
         """학습 실행 및 메타데이터 업데이트"""
         print(f"🚀 [WFO] 파이프라인 실행 중... ({datetime.now()})")
-        model = train_xrp_xgboost_model_v4()
+        model = train_xrp_xgboost_model_v4(use_optuna=self.use_optuna)
         if model:
             self.last_train_time = datetime.now()
             # 정확도는 로그에서 파싱하거나 별도 리턴값이 필요함 (현재 v4는 model만 리턴)
