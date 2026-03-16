@@ -15,7 +15,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from xrp_realtime_predictor import get_switching_prediction
 from data_fetcher import fetch_historical_data
-from bot_modules import RiskManager, PerformanceTracker
+from risk_manager import RiskManager
+from performance_tracker import PerformanceTracker
+from wfo_pipeline import WFOPipeline
 
 # 설정값 (절대 경로로 변경하여 안정성 확보)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +43,9 @@ risk_mgr = RiskManager(
 
 # AGENT TASK 6: PerformanceTracker 초기화
 tracker = PerformanceTracker(TRADING_LOG_JSONL)
+
+# AGENT TASK 7: WFOPipeline 초기화
+wfo_mgr = WFOPipeline(cycle_hours=168, threshold_degradation=0.1)
 
 def load_bot_state():
     if os.path.exists(STATE_FILE):
@@ -103,15 +108,6 @@ def log_virtual_trade(action, symbol, side, price, pnl_pct, balance):
     }])
     header = not os.path.exists(LOG_FILE)
     df.to_csv(LOG_FILE, mode='a', index=False, header=header, encoding='utf-8-sig')
-
-def run_retraining():
-    print(f"[{datetime.now()}] 🔄 재학습 트리거됨. train_xrp_v3.py 실행...")
-    try:
-        # 실제 환경에 맞게 경로 조정 필요할 수 있음
-        subprocess.run(["python3", os.path.join(current_dir, "train_xrp_v3.py")], check=True)
-        print("✅ 재학습 완료.")
-    except Exception as e:
-        print(f"❌ 재학습 실패: {e}")
 
 def run_virtual_bot_cycle():
     state = load_bot_state()
@@ -244,14 +240,10 @@ def run_virtual_bot_cycle():
             print(f"- 손익비: {perf['profit_factor']:.2f}")
             print("="*40 + "\n")
 
-    # AGENT TASK 7: 재학습 트리거 체크
+    # AGENT TASK 7: 재학습 트리거 체크 (WFO 파이프라인)
     recent_acc = tracker.get_recent_accuracy(window=50)
-    # (1) 매 168봉(7일)마다 자동 재학습
-    # (2) 최근 50봉 정확도 45% 미만 시 즉시 재학습
-    if (state["loop_count"] % 168 == 0) or (recent_acc is not None and recent_acc < 0.45):
-        reason = "주기적 재학습" if state["loop_count"] % 168 == 0 else f"정확도 저하 ({recent_acc:.1%})"
-        print(f"🔄 재학습 조건 충족: {reason}")
-        run_retraining()
+    if wfo_mgr.should_retrain(current_accuracy=recent_acc) or (state["loop_count"] % 168 == 0):
+        wfo_mgr.execute()
 
     save_bot_state(state)
     return "NO_REPLY"
