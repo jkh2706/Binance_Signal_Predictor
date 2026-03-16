@@ -18,7 +18,7 @@ def fetch_macro_data(years=1):
         '^VIX': 'VIX',          # 변동성 지수
         'CL=F': 'Oil',          # 국제 유가 (WTI)
         'SMH': 'Semiconductor', # 반도체 지수 (ETF)
-        'ETH-BTC': 'ETH_BTC'    # 이더리움/비트코인 비율
+        'ETHBTC=X': 'ETH_BTC'   # 이더리움/비트코인 비율
     }
     
     print(f"[{datetime.now()}] 매크로 지표 데이터 수집 중 (기간: {years}년)...")
@@ -27,7 +27,7 @@ def fetch_macro_data(years=1):
         macro_frames = []
         for ticker, name in tickers.items():
             print(f"[{name}] 데이터 다운로드 중...")
-            df = yf.download(ticker, start=start_date, end=end_date)
+            df = yf.download(ticker, start=start_date, end=end_date, progress=False)
             if not df.empty:
                 # MultiIndex 방지: 단일 컬럼만 추출
                 if isinstance(df.columns, pd.MultiIndex):

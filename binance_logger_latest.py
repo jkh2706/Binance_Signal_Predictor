@@ -488,9 +488,11 @@ class AsyncTradeJournal:
         try:
             logging.info(f"[{symbol}] 구글 시트 동기화 트리거 시작...")
             # 작업 디렉토리(/home/jeong-kihun/.openclaw)에서 sync_all_to_sheets.py 실행
+            env_sync = os.environ.copy()
+            env_sync["GOG_KEYRING_PASSWORD"] = "chloe"
             sync_proc = await asyncio.create_subprocess_exec(
                 sys.executable, "/home/jeong-kihun/.openclaw/workspace/sync_all_to_sheets.py",
-                env=os.environ.copy(),
+                env=env_sync,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

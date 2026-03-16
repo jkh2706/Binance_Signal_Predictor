@@ -27,7 +27,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 2. 데이터 로드 (최대한 안정적인 구조)
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=2) # TTL을 2초로 대폭 단축
 def load_data():
     try:
         df = pd.read_csv(CSV_URL, dtype=str).fillna("-")
@@ -79,7 +79,33 @@ if full_df is not None:
         st.dataframe(reals.sort_values('Time', ascending=False), use_container_width=True)
 
     with t2:
-        signals = full_df[full_df['Type'] == "AI"].tail(100).copy()
+        signals = full_df[full_df['Type'] == "AI"].copy()
+        if not signals.empty:
+            signals = signals.drop_duplicates(subset=['Time']).sort_values('Time')
+            
+            st.subheader("📊 AI 포지션 확신도 추이 (최근 100건)")
+            plot_df = signals.tail(100).copy()
+            
+            # 컬럼 매핑: Qty=LONG, PnL=SHORT, Fee=NEUTRAL
+            long_probs = pd.to_numeric(plot_df['Qty'], errors='coerce').fillna(0)
+            short_probs = pd.to_numeric(plot_df['PnL'], errors='coerce').fillna(0)
+            neutral_probs = pd.to_numeric(plot_df['Fee'], errors='coerce').fillna(0)
+
+            fig_probs = go.Figure()
+            fig_probs.add_trace(go.Scatter(x=plot_df['Time'], y=long_probs, name='LONG (상승)', line=dict(color='#00ff88', width=2), fill='tozeroy', mode='lines+markers'))
+            fig_probs.add_trace(go.Scatter(x=plot_df['Time'], y=short_probs, name='SHORT (하락)', line=dict(color='#ff4b4b', width=2), mode='lines+markers'))
+            fig_probs.add_trace(go.Scatter(x=plot_df['Time'], y=neutral_probs, name='NEUTRAL (관망)', line=dict(color='#58a6ff', width=2), line_dash='dot', mode='lines+markers'))
+            
+            fig_probs.update_layout(
+                template="plotly_dark", 
+                height=400, 
+                yaxis_range=[0, 1.1],
+                yaxis_title="Probability (0.0 - 1.0)",
+                hovermode="x unified",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig_probs, use_container_width=True)
+
         st.subheader("AI Decision History")
         st.dataframe(signals.sort_values('Time', ascending=False), use_container_width=True)
 
