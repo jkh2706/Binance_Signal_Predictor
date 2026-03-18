@@ -61,11 +61,10 @@ def optimize_hyperparams(X_train, y_train, n_trials: int = 50) -> dict:
             X_tr, X_val = X_vals[train_idx], X_vals[val_idx]
             y_tr, y_val = y_vals[train_idx], y_vals[val_idx]
             
-            model = xgb.XGBClassifier(**params)
+            model = xgb.XGBClassifier(**params, early_stopping_rounds=30)
             model.fit(
                 X_tr, y_tr,
                 eval_set=[(X_val, y_val)],
-                early_stopping_rounds=30,
                 verbose=False
             )
             pred = model.predict(X_val)

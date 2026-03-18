@@ -111,7 +111,8 @@ def log_virtual_trade(action, symbol, side, price, pnl_pct, balance):
 
 def run_virtual_bot_cycle():
     state = load_bot_state()
-    symbol = 'XRPUSD_PERP'
+    # 모델 학습 데이터와 일치시키기 위해 XRPUSDT 사용
+    symbol = 'XRPUSDT'
     state["loop_count"] = state.get("loop_count", 0) + 1
     
     print(f"\n[{datetime.now()}] --- 루프 #{state['loop_count']} 시작 ---")
@@ -145,7 +146,7 @@ def run_virtual_bot_cycle():
         indicators_str = ""
         if not df_last.empty:
             last_row = df_last.iloc[-1]
-            indicators_str = f"RSI:{last_row.get('RSI', 0):.1f}/P1h:{last_row.get('P1h', 0):.2f}%/VIX:{last_row.get('VIX', 0):.1f}"
+            indicators_str = f"RSI:{last_row.get('rsi_14', 0):.1f}/P1h:{last_row.get('return_1', 0)*100:.2f}%/VIX:{last_row.get('vix', 0):.1f}"
 
         status_map = {0: "NEUTRAL", 1: "LONG", 2: "SHORT"}
         

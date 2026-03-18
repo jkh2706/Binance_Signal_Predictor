@@ -46,7 +46,12 @@ def sync_historical_data(symbol='XRPUSDT', interval='15m', start_str='3 years ag
 
     # 3. 데이터 수집 (재시도 로직 포함)
     try:
-        klines = client.get_historical_klines(symbol, interval, start_ts)
+        # 선물 심볼 처리 보완
+        k_type = HistoricalKlinesType.SPOT
+        if 'USD' in symbol:
+            k_type = HistoricalKlinesType.FUTURES
+            
+        klines = client.get_historical_klines(symbol, interval, start_ts, klines_type=k_type)
         if not klines:
             print("ℹ️ 추가할 새로운 데이터가 없습니다.")
             return existing_df
@@ -84,18 +89,20 @@ def sync_funding_rates(symbol='XRPUSDT', start_str='3 years ago UTC'):
     start_ts = int(existing_df['timestamp'].max().timestamp() * 1000) + 1 if not existing_df.empty else start_str
     
     try:
-        # get_funding_rate_history는 limit이 1000개이므로 반복 호출 필요할 수 있음
-        # 하지만 get_historical_klines와 달리 자동으로 루프 돌지 않으므로 직접 구현
-        all_funding = []
-        # 간단하게 최근 데이터 위주로 가져오거나 필요한 만큼 루프
+        # 펀딩비 API 호출 (USD-M용)
         funding = client.futures_funding_rate(symbol=symbol, startTime=start_ts, limit=1000)
-        all_funding.extend(funding)
         
-        if not all_funding:
+        if not funding or not isinstance(funding, list):
             return existing_df
             
-        new_df = pd.DataFrame(all_funding)
-        new_df['timestamp'] = pd.to_datetime(new_df['fundingTime'], unit='ms')
+        new_df = pd.DataFrame(funding)
+        # 바이낸스 API 응답 키 확인: 'fundingTime' 또는 'time'
+        time_col = 'fundingTime' if 'fundingTime' in new_df.columns else 'time'
+        if time_col not in new_df.columns:
+            print(f"❌ 펀딩비 응답에 시간 컬럼이 없습니다. 컬럼들: {new_df.columns}")
+            return existing_df
+            
+        new_df['timestamp'] = pd.to_datetime(new_df[time_col], unit='ms')
         new_df['fundingRate'] = new_df['fundingRate'].astype(float)
         new_df = new_df[['timestamp', 'fundingRate']]
         
@@ -113,8 +120,14 @@ def _format_klines(klines):
         'Taker buy base asset volume', 'Taker buy quote asset volume', 'Ignore'
     ])
     df['Open time'] = pd.to_datetime(df['Open time'], unit='ms')
-    numeric_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
-    df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric)
+    # 모든 수치형 컬럼을 숫자로 강제 변환
+    numeric_cols = [
+        'Open', 'High', 'Low', 'Close', 'Volume',
+        'Quote asset volume', 'Taker buy base asset volume', 'Taker buy quote asset volume'
+    ]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
 if __name__ == "__main__":

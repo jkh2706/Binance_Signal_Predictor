@@ -41,11 +41,12 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
     # 2. 지표 결합
     from feature_engineering import build_features, ensure_stationarity
     df = build_features(binance_data)
-    # df = merge_with_binance_data(df, macro_data)
+    df = ensure_stationarity(df)
     
     # 모델 학습 시 사용한 피처 리스트 (train_xrp_v4.py의 로직과 일치)
-    if 'features' not in locals():
-        features = [c for c in df.columns if c not in ['open', 'high', 'low', 'close', 'volume', 'target', 'open time', 'close time']]
+    if 'features' not in locals() or features is None:
+        exclude = ['open', 'high', 'low', 'close', 'volume', 'target', 'open time', 'close time', 'timestamp', 'fundingRate']
+        features = [c for c in df.columns if c not in exclude]
     
     current_data = df[features].tail(1)
     
