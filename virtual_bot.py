@@ -148,16 +148,17 @@ def run_virtual_bot_cycle():
             last_row = df_last.iloc[-1]
             indicators_str = f"RSI:{last_row.get('rsi_14', 0):.1f}/P1h:{last_row.get('return_1', 0)*100:.2f}%/VIX:{last_row.get('vix', 0):.1f}"
 
-        status_map = {0: "NEUTRAL", 1: "LONG", 2: "SHORT"}
+        # [수정] 신호 체계 통일 (0: SHORT, 1: LONG, 2: NEUTRAL)
+        status_map = {0: "SHORT", 1: "LONG", 2: "NEUTRAL"}
         
         log_df = pd.DataFrame([{
             "시간(KST)": now_str,
             "심볼": symbol,
             "현재가": current_price,
             "판단": status_map[int(prediction)],
+            "SHORT": f"{probabilities[0]:.8f}",
             "LONG": f"{probabilities[1]:.8f}",
-            "SHORT": f"{probabilities[2]:.8f}",
-            "NEUTRAL": f"{probabilities[0]:.8f}",
+            "NEUTRAL": f"{probabilities[2]:.8f}",
             "지표": indicators_str
         }])
         
@@ -177,11 +178,11 @@ def run_virtual_bot_cycle():
     is_exited = False
     
     # 2. 기존 포지션 관리
-    if state["current_pos"] != 0:
+    if state["current_pos"] != 2: # 2 is NEUTRAL in new mapping
         if state["current_pos"] == 1: # Long
             current_pnl = (current_price / state["entry_price"] - 1) * LEVERAGE
             side_str = "LONG"
-        else: # Short
+        elif state["current_pos"] == 0: # Short
             current_pnl = (1 - current_price / state["entry_price"]) * LEVERAGE
             side_str = "SHORT"
             
@@ -204,13 +205,13 @@ def run_virtual_bot_cycle():
     # 3. 신규 진입 및 스위칭
     if not is_exited:
         if probabilities[int(prediction)] >= dynamic_threshold:
-            if prediction != 0 and prediction != state["current_pos"]:
+            if prediction != 2 and prediction != state["current_pos"]:
                 # 스위칭 시 기존 포지션 종료
-                if state["current_pos"] != 0:
+                if state["current_pos"] != 2:
                     if state["current_pos"] == 1:
                         pnl = (current_price / state["entry_price"] - 1) * LEVERAGE
                         side_old = "LONG"
-                    else:
+                    elif state["current_pos"] == 0:
                         pnl = (1 - current_price / state["entry_price"]) * LEVERAGE
                         side_old = "SHORT"
                     pnl_amount = state["balance"] * pnl

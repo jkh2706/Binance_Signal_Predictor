@@ -79,15 +79,24 @@ def optimize_hyperparams(X_train, y_train, n_trials: int = 50) -> dict:
     print(f"최적 파라미터: {study.best_params}")
     return study.best_params
 
-def train_model(X_train, y_train, params: dict = None, use_pca: bool = True, n_components: int = 25) -> tuple:
+def train_model(X_train, y_train, params: dict = None, use_pca: bool = True, n_components: int = 25, use_weight: bool = True) -> tuple:
     """
     전처리 + 모델 학습 파이프라인
     PCA 25개 주성분 = 분산의 약 90% 설명 (연구 결과 기반)
+    use_weight=True 시 SHORT(0) 클래스에 가중치 부여 (3번 전략)
     반환값: (model, scaler, pca_transformer)
     """
     if params is None:
         params = BEST_PARAMS_XRP
     
+    # 숏(0) 포지션에 가중치 1.5배 부여 (클래스 불균형 해소)
+    sample_weights = None
+    if use_weight:
+        sample_weights = np.ones(len(y_train))
+        sample_weights[y_train == 0] = 1.8 # 숏(0) 가중치 1.8배
+        sample_weights[y_train == 1] = 1.0 # 롱(1) 가중치 1.0
+        sample_weights[y_train == 2] = 0.8 # 중립(2) 가중치 소폭 하향 (신호 집중)
+
     # 스케일링
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_train)
@@ -102,7 +111,7 @@ def train_model(X_train, y_train, params: dict = None, use_pca: bool = True, n_c
         
     # XGBoost 학습
     model = xgb.XGBClassifier(**params)
-    model.fit(X_scaled, y_train, verbose=False)
+    model.fit(X_scaled, y_train, sample_weight=sample_weights, verbose=False)
     
     return model, scaler, pca
 

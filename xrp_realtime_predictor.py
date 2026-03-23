@@ -71,15 +71,15 @@ def get_switching_prediction(symbol='XRPUSD_PERP'):
     print("-" * 45)
     
     # 결과 해석
-    # 0: Neutral, 1: Long, 2: Short
-    status_map = {0: "💤 관망 (Neutral)", 1: "🚀 롱 진입/유지 (LONG)", 2: "📉 숏 진입/유지 (SHORT)"}
+    # [수정] 0: Short, 1: Long, 2: Neutral (신호 체계 통일)
+    status_map = {0: "📉 숏 진입/유지 (SHORT)", 1: "🚀 롱 진입/유지 (LONG)", 2: "💤 관망 (Neutral)"}
     
     print(f"📢 AI 추천 포지션: {status_map[prediction]}")
     print("-" * 45)
     print(f"📊 분석 결과 (확신도):")
+    print(f"  - SHORT 확률 : {probabilities[0]*100:.2f}%")
     print(f"  - LONG 확률  : {probabilities[1]*100:.2f}%")
-    print(f"  - SHORT 확률 : {probabilities[2]*100:.2f}%")
-    print(f"  - Neutral 확률: {probabilities[0]*100:.2f}%")
+    print(f"  - Neutral 확률: {probabilities[2]*100:.2f}%")
     print("="*45)
     
     return prediction, probabilities, df.tail(1)

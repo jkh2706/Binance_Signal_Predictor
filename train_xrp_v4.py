@@ -61,8 +61,8 @@ def train_xrp_xgboost_model_v4(symbol='XRPUSDT', use_optuna=False):
         params = optimize_hyperparams(X_train, y_train, n_trials=30)
 
     # 6. 모델 학습 (PCA 포함된 통합 파이프라인 사용)
-    print("XGBoost 모델 및 PCA 학습 중...")
-    model, scaler, pca = train_model(X_train, y_train, params=params, use_pca=True, n_components=25)
+    print("XGBoost 모델 및 PCA 학습 중... (3번 전략: 숏 가중치 강화 적용)")
+    model, scaler, pca = train_model(X_train, y_train, params=params, use_pca=True, n_components=25, use_weight=True)
     
     # 7. 평가
     # 테스트 데이터 전처리

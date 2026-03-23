@@ -58,3 +58,13 @@
 {"timestamp": "2026-03-17 17:08:37", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.5288, "pnl_pct": 0.025728987993139052, "balance": 1220.1384954426017, "action": "EXIT(TS)"}
 {"timestamp": "2026-03-17 19:28:13", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.5023, "pnl_pct": -0.025737477727182823, "balance": 1188.7352080920693, "action": "EXIT(SL)"}
 {"timestamp": "2026-03-18 06:20:02", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.5265, "pnl_pct": 0.03579714948624435, "balance": 1231.288540035703, "action": "EXIT(TS)"}
+{"timestamp": "2026-03-18 14:15:38", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.5282, "pnl_pct": 0.016581129095933456, "balance": 1251.7046942723782, "action": "EXIT(TS)"}
+{"timestamp": "2026-03-18 19:55:55", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.5103, "pnl_pct": -0.027553631174965676, "balance": 1217.215684786424, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-18 22:30:19", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.4613, "pnl_pct": -0.051452784503631666, "balance": 1154.5865484626677, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-19 01:38:05", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.439, "pnl_pct": -0.028087567121023893, "balance": 1122.1570212856911, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-19 23:54:01", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.442, "pnl_pct": -0.02578205568924019, "balance": 1093.2255064708315, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-20 16:32:20", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.4476, "pnl_pct": 0.041602465331279204, "balance": 1138.7063827030545, "action": "EXIT(TS)"}
+{"timestamp": "2026-03-21 01:49:15", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.4347, "pnl_pct": -0.02447286553750405, "balance": 1110.838974512465, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-21 17:41:19", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.4395, "pnl_pct": 0.01781970649895137, "balance": 1130.6337990058732, "action": "EXIT(TS)"}
+{"timestamp": "2026-03-22 09:23:46", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.4009, "pnl_pct": -0.07739916550764925, "balance": 1043.1236864680754, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-22 17:31:58", "symbol": "XRPUSDT", "side": "LONG", "exit_price": 1.3943, "pnl_pct": -0.04074991156703189, "balance": 1000.616488491025, "action": "EXIT(SL)"}
