@@ -89,13 +89,13 @@ def train_model(X_train, y_train, params: dict = None, use_pca: bool = True, n_c
     if params is None:
         params = BEST_PARAMS_XRP
     
-    # 숏(0) 포지션에 가중치 1.5배 부여 (클래스 불균형 해소)
+    # 숏(0) 가중치를 1.1배로 하향 조정 (폭주 방지)
     sample_weights = None
     if use_weight:
         sample_weights = np.ones(len(y_train))
-        sample_weights[y_train == 0] = 1.8 # 숏(0) 가중치 1.8배
-        sample_weights[y_train == 1] = 1.0 # 롱(1) 가중치 1.0
-        sample_weights[y_train == 2] = 0.8 # 중립(2) 가중치 소폭 하향 (신호 집중)
+        sample_weights[y_train == 0] = 1.1 # 1.8에서 1.1로 하향
+        sample_weights[y_train == 1] = 1.0 
+        sample_weights[y_train == 2] = 1.0 # 중립 가중치 정상화
 
     # 스케일링
     scaler = StandardScaler()

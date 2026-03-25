@@ -121,7 +121,7 @@ def run_virtual_bot_cycle():
     allowed, reason = risk_mgr.check_trading_allowed()
     if not allowed:
         print(f"🛑 [리스크 제한] 거래가 중단되었습니다: {reason}")
-        # return f"🛑 **[리스크 중단 알림]**\n- 사유: {reason}\n- 봇을 정지합니다."
+        return "NO_REPLY" # [수정] 무조건 루프 중단
 
     # 현재가 확인
     try:
