@@ -86,3 +86,4 @@
 {"timestamp": "2026-03-25 16:15:04", "symbol": "XRPUSDT", "side": "SHORT", "exit_price": 1.4188, "pnl_pct": -0.06856030567370786, "balance": 544.8278319366609, "action": "EXIT(SL)"}
 {"timestamp": "2026-03-25 17:20:44", "symbol": "XRPUSDT", "side": "SHORT", "exit_price": 1.4192, "pnl_pct": -0.06942541994088391, "balance": 507.0029309089769, "action": "EXIT(SL)"}
 {"timestamp": "2026-03-25 18:29:30", "symbol": "XRPUSDT", "side": "SHORT", "exit_price": 1.419, "pnl_pct": -0.06899286280729555, "balance": 472.0233472538771, "action": "EXIT(SL)"}
+{"timestamp": "2026-03-27 11:44:18", "symbol": "XRPUSDT", "side": "SHORT", "exit_price": 1.3706, "pnl_pct": -0.02338235294117652, "balance": 460.98306176470584, "action": "EXIT(SL)"}
