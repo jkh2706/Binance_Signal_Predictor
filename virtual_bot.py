@@ -109,6 +109,26 @@ def log_virtual_trade(action, symbol, side, price, pnl_pct, balance):
     header = not os.path.exists(LOG_FILE)
     df.to_csv(LOG_FILE, mode='a', index=False, header=header, encoding='utf-8-sig')
 
+def is_market_suitable(df_last):
+    """
+    거래에 적합한 시장 상황인지 체크 (Volatility & Trend Filter)
+    """
+    if df_last.empty: return False, "No data"
+    
+    last_row = df_last.iloc[-1]
+    
+    # 1. 변동성 필터: ADX (20 미만은 횡보장으로 간주)
+    adx_val = last_row.get('adx', 0)
+    if adx_val < 20:
+        return False, f"Low Volatility (ADX: {adx_val:.1f})"
+    
+    # 2. 볼린저 밴드 폭 필터 (너무 좁으면 횡보)
+    bb_width = last_row.get('bb_width', 0)
+    if bb_width < 0.02: # 2% 미만 폭
+        return False, f"Narrow Range (BB Width: {bb_width:.3f})"
+        
+    return True, "Market OK"
+
 def run_virtual_bot_cycle():
     state = load_bot_state()
     # 모델 학습 데이터와 일치시키기 위해 XRPUSDT 사용
@@ -204,30 +224,46 @@ def run_virtual_bot_cycle():
 
     # 3. 신규 진입 및 스위칭
     if not is_exited:
+        # 시장 상황 필터링 (횡보장 진입 방지)
+        market_ok, market_reason = is_market_suitable(df_last)
+        
         if probabilities[int(prediction)] >= dynamic_threshold:
-            if prediction != 2 and prediction != state["current_pos"]:
-                # 스위칭 시 기존 포지션 종료
-                if state["current_pos"] != 2:
-                    if state["current_pos"] == 1:
-                        pnl = (current_price / state["entry_price"] - 1) * LEVERAGE
-                        side_old = "LONG"
-                    elif state["current_pos"] == 0:
-                        pnl = (1 - current_price / state["entry_price"]) * LEVERAGE
-                        side_old = "SHORT"
-                    pnl_amount = state["balance"] * pnl
-                    risk_mgr.update_balance(pnl_amount)
-                    log_virtual_trade("EXIT(SWITCH)", symbol, side_old, current_price, pnl, risk_mgr.current_balance)
-                
-                # 진입 전 리스크 매니저 기반 수량 계산 (로깅용)
-                qty = risk_mgr.calculate_position_size(current_price, SL_THRESHOLD)
-                
-                state["current_pos"] = int(prediction)
-                state["entry_price"] = current_price
-                state["entry_time"] = datetime.now().isoformat()
-                state["peak_pnl"] = -999
-                side_new = "LONG" if state["current_pos"] == 1 else "SHORT"
-                log_virtual_trade("ENTRY", symbol, side_new, current_price, 0, risk_mgr.current_balance)
-                print(f"🚀 신규 진입: {side_new} (수량: {qty:.2f})")
+            # 앙상블 조건: AI 신호 + 시장 상황 + 이평선 추세 일치 확인
+            ema_25 = df_last['ema_25'].iloc[-1]
+            ema_99 = df_last['ema_99'].iloc[-1]
+            
+            # 추세 일치 여부 (Long: 25 > 99, Short: 25 < 99)
+            trend_align = (prediction == 1 and ema_25 > ema_99) or (prediction == 0 and ema_25 < ema_99)
+            
+            if market_ok and trend_align:
+                if prediction != 2 and prediction != state["current_pos"]:
+                    # 스위칭 시 기존 포지션 종료
+                    if state["current_pos"] != 2:
+                        if state["current_pos"] == 1:
+                            pnl = (current_price / state["entry_price"] - 1) * LEVERAGE
+                            side_old = "LONG"
+                        elif state["current_pos"] == 0:
+                            pnl = (1 - current_price / state["entry_price"]) * LEVERAGE
+                            side_old = "SHORT"
+                        pnl_amount = state["balance"] * pnl
+                        risk_mgr.update_balance(pnl_amount)
+                        log_virtual_trade("EXIT(SWITCH)", symbol, side_old, current_price, pnl, risk_mgr.current_balance)
+                    
+                    # 진입 전 리스크 매니저 기반 수량 계산 (로깅용)
+                    qty = risk_mgr.calculate_position_size(current_price, SL_THRESHOLD)
+                    
+                    state["current_pos"] = int(prediction)
+                    state["entry_price"] = current_price
+                    state["entry_time"] = datetime.now().isoformat()
+                    state["peak_pnl"] = -999
+                    side_new = "LONG" if state["current_pos"] == 1 else "SHORT"
+                    log_virtual_trade("ENTRY", symbol, side_new, current_price, 0, risk_mgr.current_balance)
+                    print(f"🚀 신규 진입: {side_new} (수량: {qty:.2f}) - 필터 통과: {market_reason}")
+            else:
+                if prediction != 2 and not trend_align:
+                    print(f"⚠️ 진입 취소: AI 신호({prediction})가 이평선 추세와 일치하지 않음.")
+                elif not market_ok:
+                    print(f"⚠️ 진입 취소: 시장 상황 부적합 ({market_reason})")
 
     # AGENT TASK 6: 24봉마다 성과 지표 출력
     if state["loop_count"] % 24 == 0:

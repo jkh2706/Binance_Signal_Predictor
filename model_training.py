@@ -89,13 +89,12 @@ def train_model(X_train, y_train, params: dict = None, use_pca: bool = True, n_c
     if params is None:
         params = BEST_PARAMS_XRP
     
-    # 숏(0) 가중치를 1.1배로 하향 조정 (폭주 방지)
+    # 3번 전략 개선: 인위적 가중치 대신 클래스 빈도에 따른 자동 밸런싱 적용
     sample_weights = None
     if use_weight:
-        sample_weights = np.ones(len(y_train))
-        sample_weights[y_train == 0] = 1.1 # 1.8에서 1.1로 하향
-        sample_weights[y_train == 1] = 1.0 
-        sample_weights[y_train == 2] = 1.0 # 중립 가중치 정상화
+        from sklearn.utils.class_weight import compute_sample_weight
+        sample_weights = compute_sample_weight(class_weight='balanced', y=y_train)
+        print("✅ 클래스 불균형 해소를 위해 'balanced' 가중치를 적용했습니다.")
 
     # 스케일링
     scaler = StandardScaler()
