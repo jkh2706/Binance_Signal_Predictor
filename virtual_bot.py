@@ -199,7 +199,7 @@ def run_virtual_bot_cycle():
             pnl_amount = state["balance"] * current_pnl
             risk_mgr.update_balance(pnl_amount)
             log_virtual_trade(exit_action, symbol, side_str, current_price, current_pnl, risk_mgr.current_balance)
-            state["current_pos"] = 0
+            state["current_pos"] = 2 # [수정] 0(SHORT)이 아닌 2(NEUTRAL)로 변경
             is_exited = True
 
     # 3. 신규 진입 및 스위칭
