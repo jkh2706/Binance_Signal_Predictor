@@ -10,3 +10,9 @@ plotly
 openpyxl
 altair>=5.0.0
 requests
+ta
+optuna
+statsmodels
+schedule
+joblib
+pypdf
